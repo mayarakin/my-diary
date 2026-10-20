@@ -603,6 +603,69 @@ select {
   font-size: 1.4rem;
 }
 
+.modal--wide {
+  width: min(720px, 100%);
+}
+
+.assunto-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.assunto-editor__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.assunto-editor__row input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+}
+
+.assunto-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.assunto-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  line-height: 1.45;
+}
+
+.assunto-row__texto {
+  font-weight: 600;
+}
+
+.assunto-row.is-done .assunto-row__texto {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  color: var(--accent-deep);
+}
+
+.assunto-row__alinhado {
+  color: var(--ink-soft);
+}
+
+.assunto-row__alinhado::before {
+  content: "→ ";
+  color: var(--accent);
+}
+
 .modal__actions {
   display: flex;
   justify-content: flex-end;
@@ -1039,5 +1102,9 @@ select {
 
   .keep-composer__actions {
     flex-wrap: wrap;
+  }
+
+  .assunto-editor__row {
+    grid-template-columns: 1fr;
   }
 }

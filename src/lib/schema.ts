@@ -7,6 +7,7 @@ import type {
   Nota,
   OneOnOne,
   Pessoa,
+  PautaAssunto,
   Projeto,
   ProjetoStatus,
   Recorrencia,
@@ -137,6 +138,7 @@ export function parseProjeto(raw: unknown): Projeto | null {
     updates,
     pessoaId: asString(o.pessoaId) || undefined,
     pessoaNome: asString(o.pessoaNome) || undefined,
+    data: asString(o.data) || undefined,
     createdAt: asString(o.createdAt, new Date().toISOString()),
     updatedAt: asString(o.updatedAt, new Date().toISOString()),
   };
@@ -160,18 +162,45 @@ export function parseAtividade(raw: unknown): Atividade | null {
   };
 }
 
+function parseAssuntos(raw: unknown, pautaFallback: string): PautaAssunto[] {
+  if (Array.isArray(raw)) {
+    const parsed: PautaAssunto[] = [];
+    for (const item of raw) {
+      if (!item || typeof item !== "object") continue;
+      const a = item as Record<string, unknown>;
+      const texto = asString(a.texto);
+      if (!texto) continue;
+      const alinhado = asString(a.alinhado);
+      parsed.push({
+        id: asString(a.id) || newId(),
+        texto,
+        ...(alinhado ? { alinhado } : {}),
+      });
+    }
+    return parsed;
+  }
+  return pautaFallback
+    .split("\n")
+    .map((l) => l.replace(/^[-*•]\s*/, "").trim())
+    .filter(Boolean)
+    .map((texto) => ({ id: newId(), texto }));
+}
+
 export function parseOneOnOne(raw: unknown): OneOnOne | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   const id = asString(o.id);
   const data = asString(o.data);
   if (!id || !data) return null;
+  const pauta = asString(o.pauta);
+  const assuntos = parseAssuntos(o.assuntos, pauta);
   return {
     id,
     pessoaId: asString(o.pessoaId) || undefined,
     pessoaNome: asString(o.pessoaNome) || undefined,
     data,
-    pauta: asString(o.pauta),
+    pauta: assuntos.map((a) => a.texto).join("\n") || pauta,
+    assuntos,
     combinados: asString(o.combinados),
     followUps: asString(o.followUps),
     createdAt: asString(o.createdAt, new Date().toISOString()),

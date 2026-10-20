@@ -122,7 +122,7 @@ export default function HojePage() {
   return (
     <div>
       <PageHeader
-        title="Demandas de hoje"
+        title="Demandas"
         subtitle="Abra este link no dia e veja só o que cai nesta data — inclusive recorrências (ex.: a cada 15 dias na sexta)."
         actions={
           <button
@@ -156,8 +156,8 @@ export default function HojePage() {
         </div>
         <p className="today-hero__meta" style={{ marginTop: "0.65rem" }}>
           Atalho fixo:{" "}
-          <code style={{ fontSize: "0.9em" }}>/hoje/</code> — sempre mostra o
-          dia atual quando você abrir o link.
+          <code style={{ fontSize: "0.9em" }}>/demandas/</code> — ao abrir,
+          mostra o dia atual.
         </p>
       </section>
 

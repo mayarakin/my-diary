@@ -7,12 +7,12 @@ import { SaveBadge } from "./save-badge";
 
 const NAV = [
   { href: "/", label: "Home" },
-  { href: "/hoje/", label: "Demandas de hoje" },
+  { href: "/demandas/", label: "Demandas" },
   { href: "/projetos/", label: "Projetos" },
-  { href: "/atividades/", label: "Atividades" },
   { href: "/pautas-1on1/", label: "Pautas 1:1" },
   { href: "/notas/", label: "Bloco de notas" },
   { href: "/pessoas/", label: "Pessoas" },
+  { href: "/trajetoria/", label: "Trajetória" },
 ] as const;
 
 function normalizePath(path: string) {

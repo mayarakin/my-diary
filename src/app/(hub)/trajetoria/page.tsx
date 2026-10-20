@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { useCollection } from "@/hooks/use-collection";
@@ -14,12 +14,27 @@ const empty = {
   projetoId: "",
 };
 
-export default function AtividadesPage() {
+export default function TrajetoriaPage() {
   const { items, upsert, remove, loading } = useCollection("atividades");
   const projetos = useCollection("projetos");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Atividade | null>(null);
   const [form, setForm] = useState(empty);
+
+  const timeline = useMemo(() => {
+    const byDate = new Map<string, Atividade[]>();
+    for (const a of items) {
+      const list = byDate.get(a.date) ?? [];
+      list.push(a);
+      byDate.set(a.date, list);
+    }
+    return [...byDate.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([date, entries]) => ({
+        date,
+        entries: entries.sort((x, y) => y.updatedAt.localeCompare(x.updatedAt)),
+      }));
+  }, [items]);
 
   function openNew() {
     setEditing(null);
@@ -53,51 +68,78 @@ export default function AtividadesPage() {
     setOpen(false);
   }
 
-  const sorted = [...items].sort((a, b) => b.date.localeCompare(a.date));
-
   return (
     <div>
       <PageHeader
-        title="Atividades"
-        subtitle="Registro do que você fez — com vínculo opcional a um projeto."
+        title="Trajetória"
+        subtitle="Linha do tempo do que você fez — o mais recente sempre no topo."
         actions={
           <button type="button" className="btn" onClick={openNew}>
-            Nova atividade
+            Novo registro
           </button>
         }
       />
 
       {loading ? (
-        <EmptyState title="Carregando atividades…" />
-      ) : sorted.length === 0 ? (
-        <EmptyState title="Nenhuma atividade ainda" hint="Registre o primeiro feito do dia." />
+        <EmptyState title="Carregando trajetória…" />
+      ) : timeline.length === 0 ? (
+        <EmptyState
+          title="Nenhum registro ainda"
+          hint="Registre o primeiro feito da sua trajetória."
+        />
       ) : (
-        <div className="list-stack">
-          {sorted.map((a) => {
-            const projeto = projetos.items.find((p) => p.id === a.projetoId);
+        <div className="timeline">
+          {timeline.map((group) => {
+            const label = new Date(`${group.date}T12:00:00`).toLocaleDateString(
+              "pt-BR",
+              {
+                weekday: "long",
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              },
+            );
             return (
-              <div key={a.id} className="list-item">
-                <div>
-                  <h3>{a.titulo}</h3>
-                  <p>
-                    {new Date(`${a.date}T12:00:00`).toLocaleDateString("pt-BR")}
-                    {projeto ? ` · ${projeto.titulo}` : ""}
-                  </p>
-                  {a.notas ? <p>{a.notas}</p> : null}
+              <section key={group.date} className="timeline__group">
+                <header className="timeline__date">
+                  <span className="timeline__dot" aria-hidden />
+                  <h2>{label}</h2>
+                </header>
+                <div className="timeline__entries">
+                  {group.entries.map((a) => {
+                    const projeto = projetos.items.find((p) => p.id === a.projetoId);
+                    return (
+                      <article key={a.id} className="timeline__card">
+                        <h3 style={{ margin: "0 0 0.35rem", fontSize: "1.05rem" }}>
+                          {a.titulo}
+                        </h3>
+                        {projeto ? (
+                          <p style={{ margin: "0 0 0.35rem", color: "var(--ink-soft)" }}>
+                            Projeto: {projeto.titulo}
+                          </p>
+                        ) : null}
+                        {a.notas ? <p className="timeline__extra">{a.notas}</p> : null}
+                        <div className="item-actions" style={{ marginTop: "0.75rem" }}>
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => openEdit(a)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--danger btn--sm"
+                            onClick={() => void remove(a.id)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
-                <div className="item-actions">
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => openEdit(a)}>
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn--danger btn--sm"
-                    onClick={() => void remove(a.id)}
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </div>
+              </section>
             );
           })}
         </div>
@@ -106,7 +148,7 @@ export default function AtividadesPage() {
       {open ? (
         <div className="modal-backdrop" onClick={() => setOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{editing ? "Editar atividade" : "Nova atividade"}</h2>
+            <h2>{editing ? "Editar registro" : "Novo registro"}</h2>
             <form className="form-grid" onSubmit={onSubmit}>
               <div className="field">
                 <label htmlFor="a-date">Data</label>

@@ -75,13 +75,13 @@ O workflow faz `npm ci` → `GITHUB_PAGES=true npm run build` → publica `out/`
 
 | Área | Rota | Conteúdo |
 |------|------|----------|
-| Home | `/` | Resumo + checklist de demandas |
-| Demandas de hoje | `/hoje/` | O que cai **neste dia** (prazo ou recorrência, ex. a cada 15 dias na sexta) |
-| Projetos | `/projetos/` | Kanban + pessoa que ajudou (sincroniza com Pessoas) |
-| Atividades | `/atividades/` | Registro do que você fez |
-| Pautas 1:1 | `/pautas-1on1/` | Pauta, combinados, follow-ups |
-| Bloco de notas | `/notas/` | Notas livres + busca |
-| Pessoas | `/pessoas/` | Cadastro + projetos/atividades/1:1s ligados |
+| Home | `/` | Resumo + demandas do dia |
+| Demandas | `/demandas/` | O que cai **neste dia** (prazo ou recorrência) |
+| Projetos | `/projetos/` | Kanban + data opcional + pessoa que ajudou |
+| Pautas 1:1 | `/pautas-1on1/` | Linha do tempo: assuntos + alinhado por item |
+| Bloco de notas | `/notas/` | Notas rápidas (Keep) + busca |
+| Pessoas | `/pessoas/` | Cadastro + projetos/trajetória/1:1s |
+| Trajetória | `/trajetoria/` | Linha do tempo do que você fez (mais recente no topo) |
 
 ## Arquitetura (resumo)
 

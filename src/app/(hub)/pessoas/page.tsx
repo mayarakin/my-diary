@@ -110,7 +110,7 @@ export default function PessoasPage() {
                   </div>
 
                   <div className="pessoa-block">
-                    <strong>Atividades nesses projetos</strong>
+                    <strong>Trajetória nesses projetos</strong>
                     <p style={{ margin: 0 }}>
                       {linkedAtividades.length === 0
                         ? "nenhuma ainda"

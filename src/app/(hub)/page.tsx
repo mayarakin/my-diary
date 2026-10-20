@@ -84,7 +84,7 @@ export default function HomePage() {
         title="Home"
         subtitle={`Foco no que é de hoje · ${hojeLabel}`}
         actions={
-          <Link href="/hoje/" className="btn btn--ghost">
+          <Link href="/demandas/" className="btn btn--ghost">
             Gerenciar demandas
           </Link>
         }
@@ -114,7 +114,7 @@ export default function HomePage() {
 
       <section className="panel">
         <h2 style={{ margin: "0 0 0.85rem", fontFamily: "var(--font-display)" }}>
-          Demandas de hoje
+          Demandas
         </h2>
 
         {demandas.loading ? (
@@ -122,7 +122,7 @@ export default function HomePage() {
         ) : demandasHoje.length === 0 ? (
           <EmptyState
             title="Nada para hoje"
-            hint="Crie ou configure recorrências em Demandas de hoje."
+            hint="Crie ou configure recorrências em Demandas."
           />
         ) : (
           <div className="checklist">

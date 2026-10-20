@@ -71,6 +71,8 @@ export interface Projeto {
   /** Pessoa que ajudou neste projeto (cadastro em Pessoas) */
   pessoaId?: string;
   pessoaNome?: string;
+  /** Data opcional do projeto (YYYY-MM-DD) */
+  data?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,12 +87,21 @@ export interface Atividade {
   updatedAt: string;
 }
 
+/** Assunto da pauta 1:1 + o que foi alinhado depois da conversa */
+export interface PautaAssunto {
+  id: string;
+  texto: string;
+  alinhado?: string;
+}
+
 export interface OneOnOne {
   id: string;
   pessoaId?: string;
   pessoaNome?: string;
   data: string;
+  /** Texto legado (linhas); preferir `assuntos` */
   pauta: string;
+  assuntos?: PautaAssunto[];
   combinados: string;
   followUps: string;
   createdAt: string;

@@ -50,6 +50,12 @@ function KanbanCard({
       {...attributes}
     >
       <h3>{projeto.titulo}</h3>
+      {projeto.data ? (
+        <p>
+          Data:{" "}
+          {new Date(`${projeto.data}T12:00:00`).toLocaleDateString("pt-BR")}
+        </p>
+      ) : null}
       {projeto.pessoaNome ? <p>Com: {projeto.pessoaNome}</p> : null}
       {projeto.impacto ? <p>Impacto: {projeto.impacto}</p> : null}
       {projeto.descricao ? (
@@ -110,6 +116,7 @@ const emptyForm = {
   update: "",
   pessoaId: "",
   pessoaNome: "",
+  data: "",
 };
 
 export default function ProjetosPage() {
@@ -140,6 +147,7 @@ export default function ProjetosPage() {
       update: "",
       pessoaId: p.pessoaId ?? "",
       pessoaNome: p.pessoaNome ?? "",
+      data: p.data ?? "",
     });
     setOpen(true);
   }
@@ -202,6 +210,7 @@ export default function ProjetosPage() {
       updates,
       pessoaId: linked.pessoaId,
       pessoaNome: linked.pessoaNome,
+      data: form.data || undefined,
       updatedAt: now,
       createdAt: base.createdAt || now,
     });
@@ -273,6 +282,15 @@ export default function ProjetosPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="field">
+                <label htmlFor="p-data">Data (opcional)</label>
+                <input
+                  id="p-data"
+                  type="date"
+                  value={form.data}
+                  onChange={(e) => setForm({ ...form, data: e.target.value })}
+                />
               </div>
               <div className="field">
                 <label htmlFor="p-pessoa">Quem me ajudou</label>
