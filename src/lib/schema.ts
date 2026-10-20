@@ -9,6 +9,8 @@ import type {
   Pessoa,
   Projeto,
   ProjetoStatus,
+  Recorrencia,
+  RecorrenciaTipo,
 } from "./types";
 
 const PROJETO_STATUSES: ProjetoStatus[] = [
@@ -49,6 +51,33 @@ export function defaultMeta(): Meta {
   };
 }
 
+function parseRecorrencia(raw: unknown): Recorrencia | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const o = raw as Record<string, unknown>;
+  const tipo = asString(o.tipo) as RecorrenciaTipo;
+  if (
+    tipo !== "semanal" &&
+    tipo !== "quinzenal" &&
+    tipo !== "a_cada_n_dias"
+  ) {
+    return undefined;
+  }
+  const dataInicio = asString(o.dataInicio);
+  if (!dataInicio) return undefined;
+  return {
+    tipo,
+    dataInicio,
+    diaSemana:
+      typeof o.diaSemana === "number" && o.diaSemana >= 0 && o.diaSemana <= 6
+        ? o.diaSemana
+        : undefined,
+    intervaloDias:
+      typeof o.intervaloDias === "number" && o.intervaloDias > 0
+        ? o.intervaloDias
+        : undefined,
+  };
+}
+
 export function parseDemanda(raw: unknown): Demanda | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
@@ -66,6 +95,8 @@ export function parseDemanda(raw: unknown): Demanda | null {
         ? o.prioridade
         : undefined,
     prazo: asString(o.prazo) || undefined,
+    recorrencia: parseRecorrencia(o.recorrencia),
+    feitasEm: asStringArray(o.feitasEm),
     createdAt: asString(o.createdAt, new Date().toISOString()),
     updatedAt: asString(o.updatedAt, new Date().toISOString()),
   };
@@ -104,6 +135,8 @@ export function parseProjeto(raw: unknown): Projeto | null {
     impacto: asString(o.impacto),
     links: asStringArray(o.links),
     updates,
+    pessoaId: asString(o.pessoaId) || undefined,
+    pessoaNome: asString(o.pessoaNome) || undefined,
     createdAt: asString(o.createdAt, new Date().toISOString()),
     updatedAt: asString(o.updatedAt, new Date().toISOString()),
   };

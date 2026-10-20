@@ -2,17 +2,18 @@
 
 import {
   DndContext,
-  DragEndEvent,
+  type DragEndEvent,
   PointerSensor,
+  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useDraggable } from "@dnd-kit/core";
 import { useState, type FormEvent } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { useCollection } from "@/hooks/use-collection";
+import { resolveOrCreatePessoa } from "@/lib/pessoas-sync";
 import { newId, nowIso } from "@/lib/schema";
 import type { Projeto, ProjetoStatus } from "@/lib/types";
 
@@ -49,6 +50,7 @@ function KanbanCard({
       {...attributes}
     >
       <h3>{projeto.titulo}</h3>
+      {projeto.pessoaNome ? <p>Com: {projeto.pessoaNome}</p> : null}
       {projeto.impacto ? <p>Impacto: {projeto.impacto}</p> : null}
       {projeto.descricao ? (
         <p>
@@ -106,10 +108,13 @@ const emptyForm = {
   impacto: "",
   links: "",
   update: "",
+  pessoaId: "",
+  pessoaNome: "",
 };
 
 export default function ProjetosPage() {
   const { items, upsert, remove, loading } = useCollection("projetos");
+  const pessoas = useCollection("pessoas");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Projeto | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -133,6 +138,8 @@ export default function ProjetosPage() {
       impacto: p.impacto,
       links: p.links.join("\n"),
       update: "",
+      pessoaId: p.pessoaId ?? "",
+      pessoaNome: p.pessoaNome ?? "",
     });
     setOpen(true);
   }
@@ -154,6 +161,14 @@ export default function ProjetosPage() {
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
+
+    const linked = await resolveOrCreatePessoa({
+      pessoaId: form.pessoaId || undefined,
+      pessoaNome: form.pessoaNome || undefined,
+      pessoas: pessoas.items,
+      upsertPessoa: pessoas.upsert,
+    });
+
     const base: Projeto = editing
       ? { ...editing }
       : {
@@ -185,6 +200,8 @@ export default function ProjetosPage() {
       impacto: form.impacto.trim(),
       links,
       updates,
+      pessoaId: linked.pessoaId,
+      pessoaNome: linked.pessoaNome,
       updatedAt: now,
       createdAt: base.createdAt || now,
     });
@@ -257,6 +274,41 @@ export default function ProjetosPage() {
                   ))}
                 </select>
               </div>
+              <div className="field">
+                <label htmlFor="p-pessoa">Quem me ajudou</label>
+                <select
+                  id="p-pessoa"
+                  value={form.pessoaId}
+                  onChange={(e) => {
+                    const pessoa = pessoas.items.find((p) => p.id === e.target.value);
+                    setForm({
+                      ...form,
+                      pessoaId: e.target.value,
+                      pessoaNome: pessoa?.nome ?? "",
+                    });
+                  }}
+                >
+                  <option value="">Nome livre ou ninguém…</option>
+                  {pessoas.items.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {!form.pessoaId ? (
+                <div className="field">
+                  <label htmlFor="p-pessoa-nome">Nome de quem ajudou</label>
+                  <input
+                    id="p-pessoa-nome"
+                    value={form.pessoaNome}
+                    onChange={(e) =>
+                      setForm({ ...form, pessoaNome: e.target.value })
+                    }
+                    placeholder="Ex.: Ana — sincroniza com Pessoas"
+                  />
+                </div>
+              ) : null}
               <div className="field">
                 <label htmlFor="p-desc">Descrição</label>
                 <textarea

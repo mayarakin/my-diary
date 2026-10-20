@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #12353a;
-  --ink-soft: #2a5459;
-  --mist: #eef4f2;
-  --mist-deep: #d9e6e1;
-  --paper: #f7faf8;
-  --accent: #0f7a6c;
-  --accent-deep: #0b5a50;
+  --ink: #3a2438;
+  --ink-soft: #6a4a66;
+  --mist: #f8f0f6;
+  --mist-deep: #eddde9;
+  --paper: #fdf8fb;
+  --accent: #c45a9a;
+  --accent-deep: #9a3d78;
   --warn: #b45309;
   --danger: #9f1239;
-  --line: rgba(18, 53, 58, 0.12);
-  --shadow: 0 18px 40px rgba(18, 53, 58, 0.08);
+  --line: rgba(58, 36, 56, 0.12);
+  --shadow: 0 18px 40px rgba(90, 40, 80, 0.1);
   --radius: 14px;
   --sidebar-w: 248px;
   --font-display: var(--font-fraunces), Georgia, serif;
@@ -36,9 +36,9 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   background:
-    radial-gradient(1200px 600px at 10% -10%, #cfe5de 0%, transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, #d7e3ef 0%, transparent 50%),
-    linear-gradient(160deg, var(--mist) 0%, var(--paper) 45%, #e8f0ec 100%);
+    radial-gradient(1200px 600px at 8% -8%, #f3cfe6 0%, transparent 55%),
+    radial-gradient(900px 520px at 100% 0%, #dcc8f0 0%, transparent 52%),
+    linear-gradient(160deg, var(--mist) 0%, var(--paper) 48%, #f3e8f6 100%);
   background-attachment: fixed;
 }
 
@@ -164,13 +164,13 @@ select {
 }
 
 .sidebar__link:hover {
-  background: rgba(15, 122, 108, 0.08);
+  background: rgba(196, 90, 154, 0.1);
   color: var(--ink);
   transform: translateX(2px);
 }
 
 .sidebar__link.is-active {
-  background: rgba(15, 122, 108, 0.14);
+  background: rgba(196, 90, 154, 0.16);
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -262,7 +262,7 @@ select {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  outline: 2px solid rgba(15, 122, 108, 0.35);
+  outline: 2px solid rgba(196, 90, 154, 0.4);
   outline-offset: 1px;
 }
 
@@ -359,8 +359,8 @@ select {
   border: 1px solid var(--line);
   background: linear-gradient(
     160deg,
-    rgba(255, 255, 255, 0.85),
-    rgba(233, 242, 238, 0.9)
+    rgba(255, 255, 255, 0.88),
+    rgba(246, 230, 242, 0.92)
   );
   animation: rise 0.5s ease both;
 }
@@ -414,8 +414,8 @@ select {
 }
 
 .filter-chip.is-active {
-  background: rgba(15, 122, 108, 0.12);
-  border-color: rgba(15, 122, 108, 0.3);
+  background: rgba(196, 90, 154, 0.14);
+  border-color: rgba(196, 90, 154, 0.35);
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -485,8 +485,8 @@ select {
 }
 
 .kanban-col.is-over {
-  background: rgba(15, 122, 108, 0.08);
-  border-color: rgba(15, 122, 108, 0.35);
+  background: rgba(196, 90, 154, 0.1);
+  border-color: rgba(196, 90, 154, 0.35);
 }
 
 .kanban-col__title {
@@ -562,7 +562,7 @@ select {
   font-size: 0.75rem;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
-  background: rgba(15, 122, 108, 0.1);
+  background: rgba(196, 90, 154, 0.12);
   color: var(--accent-deep);
 }
 
@@ -632,8 +632,8 @@ select {
   position: absolute;
   inset: -20%;
   background:
-    radial-gradient(circle at 20% 30%, rgba(15, 122, 108, 0.18), transparent 40%),
-    radial-gradient(circle at 80% 20%, rgba(45, 90, 120, 0.16), transparent 42%);
+    radial-gradient(circle at 20% 30%, rgba(196, 90, 154, 0.22), transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(160, 120, 210, 0.2), transparent 42%);
   animation: pulse-soft 6s ease-in-out infinite;
   pointer-events: none;
 }
@@ -699,6 +699,46 @@ select {
   display: flex;
   gap: 0.35rem;
   flex-shrink: 0;
+}
+
+.today-hero {
+  margin-bottom: 1.25rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(236, 214, 245, 0.75)
+  );
+  box-shadow: var(--shadow);
+}
+
+.today-hero__date {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  letter-spacing: -0.02em;
+}
+
+.today-hero__meta {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+}
+
+.pessoa-block {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--line);
+}
+
+.pessoa-block strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
 }
 
 @media (max-width: 960px) {

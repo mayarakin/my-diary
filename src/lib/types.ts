@@ -28,12 +28,28 @@ export type ProjetoStatus =
 
 export type DemandaPrioridade = "baixa" | "media" | "alta";
 
+/** Recorrência para demandas do dia (ex.: a cada 15 dias na sexta). */
+export type RecorrenciaTipo = "semanal" | "quinzenal" | "a_cada_n_dias";
+
+export interface Recorrencia {
+  tipo: RecorrenciaTipo;
+  /** 0=Dom … 5=Sex … 6=Sáb */
+  diaSemana?: number;
+  /** Usado em a_cada_n_dias (ex.: 15) */
+  intervaloDias?: number;
+  /** Primeira ocorrência (YYYY-MM-DD) */
+  dataInicio: string;
+}
+
 export interface Demanda {
   id: string;
   titulo: string;
   feita: boolean;
   prioridade?: DemandaPrioridade;
   prazo?: string;
+  recorrencia?: Recorrencia;
+  /** Datas (YYYY-MM-DD) em que uma demanda recorrente foi concluída */
+  feitasEm?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +68,9 @@ export interface Projeto {
   impacto: string;
   links: string[];
   updates: ProjetoUpdate[];
+  /** Pessoa que ajudou neste projeto (cadastro em Pessoas) */
+  pessoaId?: string;
+  pessoaNome?: string;
   createdAt: string;
   updatedAt: string;
 }

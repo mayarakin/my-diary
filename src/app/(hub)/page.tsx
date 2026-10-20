@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { useCollection } from "@/hooks/use-collection";
+import { isDemandaDoneOn, isDemandaDueOn, toDateKey } from "@/lib/recurrence";
 import { newId, nowIso } from "@/lib/schema";
 import type { Demanda, DemandaPrioridade } from "@/lib/types";
 
@@ -40,7 +42,12 @@ export default function HomePage() {
   const [prazo, setPrazo] = useState("");
   const [prioridade, setPrioridade] = useState<DemandaPrioridade | "">("");
 
-  const abertas = demandas.items.filter((d) => !d.feita);
+  const hojeKey = toDateKey(new Date());
+  const demandasHoje = demandas.items.filter((d) => isDemandaDueOn(d, hojeKey));
+  const demandasHojePendentes = demandasHoje.filter(
+    (d) => !isDemandaDoneOn(d, hojeKey),
+  );
+  const abertas = demandas.items.filter((d) => !d.feita && !d.recorrencia);
   const emAndamento = projetos.items.filter((p) => p.status === "em_andamento");
   const proximo1on1 = useMemo(() => {
     const today = new Date();
@@ -94,9 +101,24 @@ export default function HomePage() {
       <PageHeader
         title="Home"
         subtitle="Resumo do dia e checklist de demandas do My Diary."
+        actions={
+          <Link href="/hoje/" className="btn">
+            Ver demandas de hoje
+          </Link>
+        }
       />
 
       <section className="summary-row" aria-label="Resumo">
+        <article className="summary-tile">
+          <p className="summary-tile__label">Para hoje</p>
+          <p className="summary-tile__value">{demandasHojePendentes.length}</p>
+          <p className="summary-tile__meta">
+            {demandasHoje.length} no total ·{" "}
+            <Link href="/hoje/" style={{ textDecoration: "underline" }}>
+              abrir
+            </Link>
+          </p>
+        </article>
         <article className="summary-tile">
           <p className="summary-tile__label">Demandas abertas</p>
           <p className="summary-tile__value">{abertas.length}</p>
@@ -119,13 +141,6 @@ export default function HomePage() {
           <p className="summary-tile__meta">
             {proximo1on1?.pessoaNome ||
               (proximo1on1 ? "Sem nome" : "Nenhum agendado")}
-          </p>
-        </article>
-        <article className="summary-tile">
-          <p className="summary-tile__label">Notas recentes</p>
-          <p className="summary-tile__value">{notasRecentes.length}</p>
-          <p className="summary-tile__meta">
-            {notasRecentes[0]?.titulo ?? "Nenhuma ainda"}
           </p>
         </article>
       </section>

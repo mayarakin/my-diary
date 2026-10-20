@@ -7,6 +7,7 @@ import { SaveBadge } from "./save-badge";
 
 const NAV = [
   { href: "/", label: "Home" },
+  { href: "/hoje/", label: "Demandas de hoje" },
   { href: "/projetos/", label: "Projetos" },
   { href: "/atividades/", label: "Atividades" },
   { href: "/pautas-1on1/", label: "Pautas 1:1" },
