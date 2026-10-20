@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { useCollection } from "@/hooks/use-collection";
@@ -9,12 +9,29 @@ import type { Nota } from "@/lib/types";
 
 const empty = { titulo: "", corpo: "", tags: "" };
 
+const KEEP_COLORS = [
+  "var(--keep-1)",
+  "var(--keep-2)",
+  "var(--keep-3)",
+  "var(--keep-4)",
+  "var(--keep-5)",
+];
+
+function colorForId(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash + id.charCodeAt(i) * 17) % 997;
+  return KEEP_COLORS[hash % KEEP_COLORS.length];
+}
+
 export default function NotasPage() {
   const { items, upsert, remove, loading } = useCollection("notas");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Nota | null>(null);
   const [form, setForm] = useState(empty);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickTitulo, setQuickTitulo] = useState("");
+  const [quickCorpo, setQuickCorpo] = useState("");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -62,17 +79,93 @@ export default function NotasPage() {
     setOpen(false);
   }
 
+  async function saveQuick() {
+    const corpo = quickCorpo.trim();
+    const titulo = quickTitulo.trim() || corpo.split("\n")[0]?.slice(0, 60) || "Nota rápida";
+    if (!corpo && !quickTitulo.trim()) return;
+    const now = nowIso();
+    await upsert({
+      id: newId(),
+      titulo,
+      corpo: corpo || titulo,
+      tags: ["rápida"],
+      createdAt: now,
+      updatedAt: now,
+    });
+    setQuickTitulo("");
+    setQuickCorpo("");
+    setQuickOpen(false);
+  }
+
+  function onQuickKey(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      void saveQuick();
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title="Bloco de notas"
-        subtitle="Notas livres com busca simples por texto e tags."
+        subtitle="Nota rápida estilo Keep, ou nota completa com tags."
         actions={
           <button type="button" className="btn" onClick={openNew}>
-            Nova nota
+            Nota completa
           </button>
         }
       />
+
+      <div
+        className={`keep-composer${quickOpen ? " is-open" : ""}`}
+        onClick={() => {
+          if (!quickOpen) setQuickOpen(true);
+        }}
+      >
+        {!quickOpen ? (
+          <p className="keep-composer__placeholder">Anotar…</p>
+        ) : (
+          <div className="keep-composer__fields" onClick={(e) => e.stopPropagation()}>
+            <input
+              className="keep-composer__title"
+              placeholder="Título"
+              value={quickTitulo}
+              onChange={(e) => setQuickTitulo(e.target.value)}
+              autoFocus
+            />
+            <textarea
+              className="keep-composer__body"
+              placeholder="Escreva uma nota rápida…"
+              value={quickCorpo}
+              onChange={(e) => setQuickCorpo(e.target.value)}
+              onKeyDown={onQuickKey}
+              rows={3}
+            />
+            <div className="keep-composer__actions">
+              <span className="keep-composer__hint">Ctrl/⌘ + Enter para salvar</span>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => {
+                  setQuickOpen(false);
+                  setQuickTitulo("");
+                  setQuickCorpo("");
+                }}
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                className="btn btn--sm"
+                onClick={() => void saveQuick()}
+                disabled={!quickTitulo.trim() && !quickCorpo.trim()}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="field" style={{ marginBottom: "1rem", maxWidth: 420 }}>
         <label htmlFor="nota-busca">Buscar</label>
@@ -89,13 +182,21 @@ export default function NotasPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           title={query ? "Nada encontrado" : "Nenhuma nota ainda"}
-          hint={query ? "Tente outro termo." : "Escreva a primeira ideia."}
+          hint={query ? "Tente outro termo." : "Use a nota rápida acima."}
         />
       ) : (
-        <div className="list-stack">
+        <div className="keep-grid">
           {filtered.map((n) => (
-            <div key={n.id} className="list-item">
-              <div>
+            <article
+              key={n.id}
+              className="keep-card"
+              style={{ background: colorForId(n.id) }}
+            >
+              <button
+                type="button"
+                className="keep-card__main"
+                onClick={() => openEdit(n)}
+              >
                 <h3>{n.titulo}</h3>
                 <p>{n.corpo}</p>
                 {n.tags.length ? (
@@ -107,9 +208,13 @@ export default function NotasPage() {
                     ))}
                   </div>
                 ) : null}
-              </div>
-              <div className="item-actions">
-                <button type="button" className="btn btn--ghost btn--sm" onClick={() => openEdit(n)}>
+              </button>
+              <div className="keep-card__foot">
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => openEdit(n)}
+                >
                   Editar
                 </button>
                 <button
@@ -120,7 +225,7 @@ export default function NotasPage() {
                   Excluir
                 </button>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}

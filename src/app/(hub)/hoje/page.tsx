@@ -41,6 +41,7 @@ export default function HojePage() {
   const [dateKey, setDateKey] = useState(() => toDateKey(new Date()));
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [recorrenciasAbertas, setRecorrenciasAbertas] = useState(false);
 
   const dueToday = useMemo(() => {
     return items
@@ -206,43 +207,61 @@ export default function HojePage() {
         </div>
       )}
 
-      <section className="panel" style={{ marginTop: "1.25rem" }}>
-        <h2 style={{ margin: "0 0 0.5rem", fontFamily: "var(--font-display)" }}>
-          Todas as recorrências
-        </h2>
-        <p style={{ margin: "0 0 0.85rem", color: "var(--ink-soft)" }}>
-          Visão rápida do que se repete — a lista de cima filtra só o dia
-          escolhido.
-        </p>
-        {items.filter((d) => d.recorrencia).length === 0 ? (
-          <EmptyState title="Nenhuma demanda recorrente ainda" />
-        ) : (
-          <div className="list-stack">
-            {items
-              .filter((d) => d.recorrencia)
-              .map((d) => (
-                <div key={d.id} className="list-item">
-                  <div>
-                    <h3>{d.titulo}</h3>
-                    <p>{describeRecorrencia(d.recorrencia)}</p>
-                    <p>
-                      Início:{" "}
-                      {new Date(
-                        `${d.recorrencia!.dataInicio}T12:00:00`,
-                      ).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn--danger btn--sm"
-                    onClick={() => void remove(d.id)}
-                  >
-                    Excluir
-                  </button>
-                </div>
-              ))}
+      <section className="panel panel--collapsible" style={{ marginTop: "1.25rem" }}>
+        <button
+          type="button"
+          className="collapse-toggle"
+          onClick={() => setRecorrenciasAbertas((v) => !v)}
+          aria-expanded={recorrenciasAbertas}
+        >
+          <span>
+            <span className="collapse-toggle__title">Todas as recorrências</span>
+            <span className="collapse-toggle__meta">
+              {items.filter((d) => d.recorrencia).length} cadastrada(s)
+            </span>
+          </span>
+          <span className="collapse-toggle__chevron" aria-hidden>
+            {recorrenciasAbertas ? "▾" : "▸"}
+          </span>
+        </button>
+
+        {recorrenciasAbertas ? (
+          <div className="collapse-body">
+            <p style={{ margin: "0 0 0.85rem", color: "var(--ink-soft)" }}>
+              Visão rápida do que se repete — a lista de cima filtra só o dia
+              escolhido.
+            </p>
+            {items.filter((d) => d.recorrencia).length === 0 ? (
+              <EmptyState title="Nenhuma demanda recorrente ainda" />
+            ) : (
+              <div className="list-stack">
+                {items
+                  .filter((d) => d.recorrencia)
+                  .map((d) => (
+                    <div key={d.id} className="list-item">
+                      <div>
+                        <h3>{d.titulo}</h3>
+                        <p>{describeRecorrencia(d.recorrencia)}</p>
+                        <p>
+                          Início:{" "}
+                          {new Date(
+                            `${d.recorrencia!.dataInicio}T12:00:00`,
+                          ).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn--danger btn--sm"
+                        onClick={() => void remove(d.id)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
-        )}
+        ) : null}
       </section>
 
       {open ? (
