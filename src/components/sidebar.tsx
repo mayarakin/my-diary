@@ -13,6 +13,7 @@ const NAV = [
   { href: "/notas/", label: "Bloco de notas" },
   { href: "/pessoas/", label: "Pessoas" },
   { href: "/trajetoria/", label: "Trajetória" },
+  { href: "/links/", label: "Links" },
 ] as const;
 
 function normalizePath(path: string) {
