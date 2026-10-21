@@ -82,6 +82,7 @@ O workflow faz `npm ci` → `GITHUB_PAGES=true npm run build` → publica `out/`
 | Bloco de notas | `/notas/` | Notas rápidas (Keep) + busca |
 | Pessoas | `/pessoas/` | Cadastro + projetos/trajetória/1:1s |
 | Trajetória | `/trajetoria/` | Linha do tempo do que você fez (mais recente no topo) |
+| Links | `/links/` | Atalhos do dia a dia por tipo de demanda (VP, ID, CSAT) |
 
 ## Arquitetura (resumo)
 
