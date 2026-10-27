@@ -108,11 +108,20 @@ export interface OneOnOne {
   updatedAt: string;
 }
 
+/** Item de checklist dentro de uma nota */
+export interface NotaTarefa {
+  id: string;
+  texto: string;
+  feita: boolean;
+}
+
 export interface Nota {
   id: string;
   titulo: string;
   corpo: string;
   tags: string[];
+  /** Checklist opcional (tarefas a fazer dentro da nota) */
+  tarefas?: NotaTarefa[];
   createdAt: string;
   updatedAt: string;
 }

@@ -964,6 +964,91 @@ select {
   padding: 0.4rem 0.55rem 0.55rem;
 }
 
+.keep-card__progress {
+  margin: 0.55rem 0 0 !important;
+  font-size: 0.78rem !important;
+  font-weight: 600;
+  color: var(--accent-deep) !important;
+}
+
+.nota-tarefas__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.nota-tarefas__head label {
+  margin: 0;
+}
+
+.nota-tarefas__empty {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.nota-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.nota-checklist--card {
+  padding: 0 1rem 0.75rem;
+}
+
+.nota-checklist li {
+  margin: 0;
+}
+
+.nota-checklist li.is-done span,
+.nota-checklist li.is-done .nota-tarefas__input {
+  text-decoration: line-through;
+  color: var(--ink-soft);
+}
+
+.nota-checklist--card label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem;
+  align-items: start;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.nota-checklist input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.12rem;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.nota-checklist--edit li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.nota-tarefas__input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+}
+
 .timeline {
   position: relative;
   display: flex;
