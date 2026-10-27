@@ -5,6 +5,7 @@ import type {
   Demanda,
   Meta,
   Nota,
+  NotaTarefa,
   OneOnOne,
   Pessoa,
   PautaAssunto,
@@ -208,17 +209,36 @@ export function parseOneOnOne(raw: unknown): OneOnOne | null {
   };
 }
 
+function parseNotaTarefas(raw: unknown): NotaTarefa[] {
+  if (!Array.isArray(raw)) return [];
+  const out: NotaTarefa[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const t = item as Record<string, unknown>;
+    const texto = asString(t.texto).trim();
+    if (!texto) continue;
+    out.push({
+      id: asString(t.id) || newId(),
+      texto,
+      feita: asBoolean(t.feita),
+    });
+  }
+  return out;
+}
+
 export function parseNota(raw: unknown): Nota | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   const id = asString(o.id);
   const titulo = asString(o.titulo);
   if (!id || !titulo) return null;
+  const tarefas = parseNotaTarefas(o.tarefas);
   return {
     id,
     titulo,
     corpo: asString(o.corpo),
     tags: asStringArray(o.tags),
+    ...(tarefas.length ? { tarefas } : {}),
     createdAt: asString(o.createdAt, new Date().toISOString()),
     updatedAt: asString(o.updatedAt, new Date().toISOString()),
   };

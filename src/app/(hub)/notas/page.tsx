@@ -5,9 +5,11 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { useCollection } from "@/hooks/use-collection";
 import { newId, nowIso } from "@/lib/schema";
-import type { Nota } from "@/lib/types";
+import type { Nota, NotaTarefa } from "@/lib/types";
 
-const empty = { titulo: "", corpo: "", tags: "" };
+type FormTarefa = { key: string; texto: string; feita: boolean };
+
+const emptyForm = { titulo: "", corpo: "", tags: "", tarefas: [] as FormTarefa[] };
 
 const KEEP_COLORS = [
   "var(--keep-1)",
@@ -23,12 +25,30 @@ function colorForId(id: string) {
   return KEEP_COLORS[hash % KEEP_COLORS.length];
 }
 
+function toFormTarefas(tarefas?: NotaTarefa[]): FormTarefa[] {
+  return (tarefas ?? []).map((t) => ({
+    key: t.id,
+    texto: t.texto,
+    feita: t.feita,
+  }));
+}
+
+function fromFormTarefas(tarefas: FormTarefa[]): NotaTarefa[] {
+  return tarefas
+    .map((t) => ({
+      id: t.key || newId(),
+      texto: t.texto.trim(),
+      feita: t.feita,
+    }))
+    .filter((t) => t.texto.length > 0);
+}
+
 export default function NotasPage() {
   const { items, upsert, remove, loading } = useCollection("notas");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Nota | null>(null);
-  const [form, setForm] = useState(empty);
+  const [form, setForm] = useState(emptyForm);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickTitulo, setQuickTitulo] = useState("");
   const [quickCorpo, setQuickCorpo] = useState("");
@@ -41,13 +61,14 @@ export default function NotasPage() {
       (n) =>
         n.titulo.toLowerCase().includes(q) ||
         n.corpo.toLowerCase().includes(q) ||
-        n.tags.some((t) => t.toLowerCase().includes(q)),
+        n.tags.some((t) => t.toLowerCase().includes(q)) ||
+        (n.tarefas ?? []).some((t) => t.texto.toLowerCase().includes(q)),
     );
   }, [items, query]);
 
   function openNew() {
     setEditing(null);
-    setForm(empty);
+    setForm({ ...emptyForm, tarefas: [] });
     setOpen(true);
   }
 
@@ -57,8 +78,30 @@ export default function NotasPage() {
       titulo: n.titulo,
       corpo: n.corpo,
       tags: n.tags.join(", "),
+      tarefas: toFormTarefas(n.tarefas),
     });
     setOpen(true);
+  }
+
+  function addTarefa() {
+    setForm((f) => ({
+      ...f,
+      tarefas: [...f.tarefas, { key: newId(), texto: "", feita: false }],
+    }));
+  }
+
+  function updateTarefa(key: string, patch: Partial<FormTarefa>) {
+    setForm((f) => ({
+      ...f,
+      tarefas: f.tarefas.map((t) => (t.key === key ? { ...t, ...patch } : t)),
+    }));
+  }
+
+  function removeTarefa(key: string) {
+    setForm((f) => ({
+      ...f,
+      tarefas: f.tarefas.filter((t) => t.key !== key),
+    }));
   }
 
   async function onSubmit(e: FormEvent) {
@@ -68,15 +111,30 @@ export default function NotasPage() {
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
+    const tarefas = fromFormTarefas(form.tarefas);
+    const corpo = form.corpo.trim();
+    if (!corpo && tarefas.length === 0) return;
     await upsert({
       id: editing?.id ?? newId(),
       titulo: form.titulo.trim(),
-      corpo: form.corpo,
+      corpo,
       tags,
+      ...(tarefas.length ? { tarefas } : {}),
       createdAt: editing?.createdAt ?? now,
       updatedAt: now,
     });
     setOpen(false);
+  }
+
+  async function toggleTarefa(nota: Nota, tarefaId: string) {
+    const tarefas = (nota.tarefas ?? []).map((t) =>
+      t.id === tarefaId ? { ...t, feita: !t.feita } : t,
+    );
+    await upsert({
+      ...nota,
+      tarefas,
+      updatedAt: nowIso(),
+    });
   }
 
   async function saveQuick() {
@@ -104,11 +162,15 @@ export default function NotasPage() {
     }
   }
 
+  const canSave =
+    form.titulo.trim().length > 0 &&
+    (form.corpo.trim().length > 0 || fromFormTarefas(form.tarefas).length > 0);
+
   return (
     <div>
       <PageHeader
         title="Bloco de notas"
-        subtitle="Nota rápida estilo Keep, ou nota completa com tags."
+        subtitle="Nota rápida, nota com texto, ou checklist de tarefas a fazer."
         actions={
           <button type="button" className="btn" onClick={openNew}>
             Nota completa
@@ -173,7 +235,7 @@ export default function NotasPage() {
           id="nota-busca"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Título, corpo ou tag…"
+          placeholder="Título, corpo, tag ou tarefa…"
         />
       </div>
 
@@ -186,53 +248,78 @@ export default function NotasPage() {
         />
       ) : (
         <div className="keep-grid">
-          {filtered.map((n) => (
-            <article
-              key={n.id}
-              className="keep-card"
-              style={{ background: colorForId(n.id) }}
-            >
-              <button
-                type="button"
-                className="keep-card__main"
-                onClick={() => openEdit(n)}
+          {filtered.map((n) => {
+            const tarefas = n.tarefas ?? [];
+            const feitas = tarefas.filter((t) => t.feita).length;
+            return (
+              <article
+                key={n.id}
+                className="keep-card"
+                style={{ background: colorForId(n.id) }}
               >
-                <h3>{n.titulo}</h3>
-                <p>{n.corpo}</p>
-                {n.tags.length ? (
-                  <div className="tag-row">
-                    {n.tags.map((t) => (
-                      <span key={t} className="tag">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </button>
-              <div className="keep-card__foot">
                 <button
                   type="button"
-                  className="btn btn--ghost btn--sm"
+                  className="keep-card__main"
                   onClick={() => openEdit(n)}
                 >
-                  Editar
+                  <h3>{n.titulo}</h3>
+                  {n.corpo ? <p>{n.corpo}</p> : null}
+                  {tarefas.length ? (
+                    <p className="keep-card__progress">
+                      {feitas}/{tarefas.length} feitas
+                    </p>
+                  ) : null}
+                  {n.tags.length ? (
+                    <div className="tag-row">
+                      {n.tags.map((t) => (
+                        <span key={t} className="tag">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn--danger btn--sm"
-                  onClick={() => void remove(n.id)}
-                >
-                  Excluir
-                </button>
-              </div>
-            </article>
-          ))}
+                {tarefas.length ? (
+                  <ul className="nota-checklist nota-checklist--card">
+                    {tarefas.map((t) => (
+                      <li key={t.id} className={t.feita ? "is-done" : undefined}>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={t.feita}
+                            onChange={() => void toggleTarefa(n, t.id)}
+                          />
+                          <span>{t.texto}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="keep-card__foot">
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={() => openEdit(n)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--danger btn--sm"
+                    onClick={() => void remove(n.id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 
       {open ? (
         <div className="modal-backdrop" onClick={() => setOpen(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal modal--wide" onClick={(e) => e.stopPropagation()}>
             <h2>{editing ? "Editar nota" : "Nova nota"}</h2>
             <form className="form-grid" onSubmit={onSubmit}>
               <div className="field">
@@ -245,15 +332,59 @@ export default function NotasPage() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="n-corpo">Corpo</label>
+                <label htmlFor="n-corpo">Texto (opcional se houver tarefas)</label>
                 <textarea
                   id="n-corpo"
-                  required
                   value={form.corpo}
                   onChange={(e) => setForm({ ...form, corpo: e.target.value })}
-                  style={{ minHeight: 160 }}
+                  style={{ minHeight: 120 }}
+                  placeholder="Anotações livres…"
                 />
               </div>
+
+              <div className="field">
+                <div className="nota-tarefas__head">
+                  <label>Tarefas a fazer</label>
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={addTarefa}>
+                    + Adicionar tarefa
+                  </button>
+                </div>
+                {form.tarefas.length === 0 ? (
+                  <p className="nota-tarefas__empty">
+                    Sem checklist ainda. Adicione itens tipo “preciso ajustar X”.
+                  </p>
+                ) : (
+                  <ul className="nota-checklist nota-checklist--edit">
+                    {form.tarefas.map((t) => (
+                      <li key={t.key} className={t.feita ? "is-done" : undefined}>
+                        <input
+                          type="checkbox"
+                          checked={t.feita}
+                          onChange={(e) => updateTarefa(t.key, { feita: e.target.checked })}
+                          aria-label="Marcar como feita"
+                        />
+                        <input
+                          type="text"
+                          className="nota-tarefas__input"
+                          value={t.texto}
+                          onChange={(e) => updateTarefa(t.key, { texto: e.target.value })}
+                          placeholder="Ex.: preciso ajustar o relatório"
+                          autoFocus={!t.texto}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => removeTarefa(t.key)}
+                          aria-label="Remover tarefa"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
               <div className="field">
                 <label htmlFor="n-tags">Tags (separadas por vírgula)</label>
                 <input
@@ -267,7 +398,7 @@ export default function NotasPage() {
                 <button type="button" className="btn btn--ghost" onClick={() => setOpen(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn">
+                <button type="submit" className="btn" disabled={!canSave}>
                   Salvar
                 </button>
               </div>
