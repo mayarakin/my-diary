@@ -80,7 +80,17 @@ select {
 .app-main {
   padding: 2rem 2.25rem 3rem;
   min-width: 0;
-  animation: rise 0.45s ease both;
+  /* Só opacity — transform no ancestral quebra position:fixed dos modais */
+  animation: fade-in 0.45s ease both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes rise {
@@ -512,23 +522,50 @@ select {
 }
 
 .kanban-card {
-  padding: 0.7rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem 0.5rem;
   margin-bottom: 0.55rem;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.92);
-  cursor: grab;
   box-shadow: 0 8px 18px rgba(18, 53, 58, 0.05);
-  max-height: 7.5rem;
-  overflow: hidden;
 }
 
-.kanban-card.is-expanded {
-  max-height: none;
+.kanban-card__drag {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: grab;
+  touch-action: none;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  user-select: none;
 }
 
-.kanban-card:active {
+.kanban-card__drag:active {
   cursor: grabbing;
+}
+
+.kanban-card__drag-handle {
+  letter-spacing: -0.08em;
+  opacity: 0.7;
+}
+
+.kanban-card__body {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+
+.kanban-card__body.is-collapsed {
+  max-height: 4.6rem;
+  overflow: hidden;
 }
 
 .kanban-card h3 {
@@ -541,23 +578,13 @@ select {
   margin: 0.28rem 0 0;
   font-size: 0.8rem;
   color: var(--ink-soft);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.kanban-card.is-expanded p {
-  display: block;
-  -webkit-line-clamp: unset;
-  overflow: visible;
 }
 
 .kanban-card__actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.25rem;
-  margin-top: 0.45rem;
+  flex-shrink: 0;
 }
 
 /* —— Lists / notes —— */
@@ -610,8 +637,8 @@ select {
   display: grid;
   place-items: center;
   padding: 1rem;
-  z-index: 40;
-  animation: rise 0.2s ease both;
+  z-index: 1000;
+  animation: fade-in 0.18s ease both;
 }
 
 .modal {
@@ -623,6 +650,7 @@ select {
   border: 1px solid var(--line);
   padding: 1.25rem;
   box-shadow: var(--shadow);
+  animation: rise 0.22s ease both;
 }
 
 .modal h2 {

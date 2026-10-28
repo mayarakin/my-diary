@@ -75,37 +75,43 @@ function KanbanCard({
       ref={setNodeRef}
       style={style}
       className={`kanban-card${expanded ? " is-expanded" : ""}`}
-      {...listeners}
-      {...attributes}
     >
-      <h3>{projeto.titulo}</h3>
-      {projeto.data ? (
-        <p>
-          Data:{" "}
-          {new Date(`${projeto.data}T12:00:00`).toLocaleDateString("pt-BR")}
-        </p>
-      ) : null}
-      {projeto.pessoaNome ? <p>Com: {projeto.pessoaNome}</p> : null}
-      {expanded && projeto.ajudaDescricao ? (
-        <p>Ajuda: {projeto.ajudaDescricao}</p>
-      ) : null}
-      {projeto.impacto && (expanded || !long) ? (
-        <p>Impacto: {projeto.impacto}</p>
-      ) : null}
-      {descPreview ? <p>{descPreview}</p> : null}
-      {expanded && projeto.links?.length ? (
-        <p>{projeto.links.slice(0, 2).join(" · ")}</p>
-      ) : null}
+      <div className="kanban-card__drag" {...listeners} {...attributes}>
+        <span className="kanban-card__drag-handle" aria-hidden>
+          ⋮⋮
+        </span>
+        <span>Arrastar</span>
+      </div>
+      <button
+        type="button"
+        className={`kanban-card__body${expanded ? "" : " is-collapsed"}`}
+        onClick={() => onEdit(projeto)}
+      >
+        <h3>{projeto.titulo}</h3>
+        {projeto.data ? (
+          <p>
+            Data:{" "}
+            {new Date(`${projeto.data}T12:00:00`).toLocaleDateString("pt-BR")}
+          </p>
+        ) : null}
+        {projeto.pessoaNome ? <p>Com: {projeto.pessoaNome}</p> : null}
+        {expanded && projeto.ajudaDescricao ? (
+          <p>Contribuição: {projeto.ajudaDescricao}</p>
+        ) : null}
+        {projeto.impacto && (expanded || !long) ? (
+          <p>Impacto: {projeto.impacto}</p>
+        ) : null}
+        {descPreview ? <p>{descPreview}</p> : null}
+        {expanded && projeto.links?.length ? (
+          <p>{projeto.links.slice(0, 2).join(" · ")}</p>
+        ) : null}
+      </button>
       <div className="kanban-card__actions">
         {long ? (
           <button
             type="button"
             className="btn btn--ghost btn--sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand(projeto.id);
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => onToggleExpand(projeto.id)}
           >
             {expanded ? "Recolher" : "Expandir"}
           </button>
@@ -113,11 +119,7 @@ function KanbanCard({
         <button
           type="button"
           className="btn btn--ghost btn--sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(projeto);
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => onEdit(projeto)}
         >
           Editar
         </button>
@@ -407,7 +409,7 @@ export default function ProjetosPage() {
               ) : null}
               {showAjudaField ? (
                 <div className="field">
-                  <label htmlFor="p-ajuda">No que me ajudou (opcional)</label>
+                  <label htmlFor="p-ajuda">Contribuição no Projeto (opcional)</label>
                   <textarea
                     id="p-ajuda"
                     value={form.ajudaDescricao}

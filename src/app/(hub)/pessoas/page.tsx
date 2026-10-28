@@ -53,7 +53,7 @@ export default function PessoasPage() {
     <div>
       <PageHeader
         title="Pessoas"
-        subtitle="Toque no nome para ver projetos e no que cada pessoa ajudou."
+        subtitle="Toque no nome para ver projetos e a contribuição de cada pessoa."
         actions={
           <button type="button" className="btn" onClick={openNew}>
             Nova pessoa
@@ -141,11 +141,11 @@ export default function PessoasPage() {
                     </div>
 
                     <div className="pessoa-block">
-                      <strong>No que me ajudou</strong>
+                      <strong>Contribuição no Projeto</strong>
                       {comAjuda.length === 0 ? (
                         <p style={{ margin: 0 }}>
                           nada registrado ainda — preencha no projeto o campo
-                          “No que me ajudou”.
+                          “Contribuição no Projeto”.
                         </p>
                       ) : (
                         <ul className="pessoa-ajuda-list">
