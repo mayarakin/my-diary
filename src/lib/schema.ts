@@ -139,6 +139,7 @@ export function parseProjeto(raw: unknown): Projeto | null {
     updates,
     pessoaId: asString(o.pessoaId) || undefined,
     pessoaNome: asString(o.pessoaNome) || undefined,
+    ajudaDescricao: asString(o.ajudaDescricao) || undefined,
     data: asString(o.data) || undefined,
     createdAt: asString(o.createdAt, new Date().toISOString()),
     updatedAt: asString(o.updatedAt, new Date().toISOString()),

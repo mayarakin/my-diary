@@ -24,12 +24,34 @@ const COLUMNS: { id: ProjetoStatus; label: string }[] = [
   { id: "concluido", label: "Concluído" },
 ];
 
+const PREVIEW_LEN = 90;
+
+function needsExpand(projeto: Projeto) {
+  const chunks = [
+    projeto.descricao,
+    projeto.impacto,
+    projeto.ajudaDescricao,
+    projeto.pessoaNome ? `Com: ${projeto.pessoaNome}` : "",
+  ].filter(Boolean);
+  return (
+    chunks.join(" ").length > PREVIEW_LEN ||
+    (projeto.descricao?.length ?? 0) > PREVIEW_LEN ||
+    (projeto.ajudaDescricao?.length ?? 0) > 60 ||
+    (projeto.links?.length ?? 0) > 0 ||
+    (projeto.updates?.length ?? 0) > 0
+  );
+}
+
 function KanbanCard({
   projeto,
   onEdit,
+  expanded,
+  onToggleExpand,
 }: {
   projeto: Projeto;
   onEdit: (p: Projeto) => void;
+  expanded: boolean;
+  onToggleExpand: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: projeto.id });
@@ -41,11 +63,18 @@ function KanbanCard({
       }
     : undefined;
 
+  const long = needsExpand(projeto);
+  const descPreview = projeto.descricao
+    ? expanded
+      ? projeto.descricao
+      : `${projeto.descricao.slice(0, PREVIEW_LEN)}${projeto.descricao.length > PREVIEW_LEN ? "…" : ""}`
+    : "";
+
   return (
     <article
       ref={setNodeRef}
       style={style}
-      className="kanban-card"
+      className={`kanban-card${expanded ? " is-expanded" : ""}`}
       {...listeners}
       {...attributes}
     >
@@ -57,25 +86,42 @@ function KanbanCard({
         </p>
       ) : null}
       {projeto.pessoaNome ? <p>Com: {projeto.pessoaNome}</p> : null}
-      {projeto.impacto ? <p>Impacto: {projeto.impacto}</p> : null}
-      {projeto.descricao ? (
-        <p>
-          {projeto.descricao.slice(0, 100)}
-          {projeto.descricao.length > 100 ? "…" : ""}
-        </p>
+      {expanded && projeto.ajudaDescricao ? (
+        <p>Ajuda: {projeto.ajudaDescricao}</p>
       ) : null}
-      <button
-        type="button"
-        className="btn btn--ghost btn--sm"
-        style={{ marginTop: "0.55rem" }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onEdit(projeto);
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        Editar
-      </button>
+      {projeto.impacto && (expanded || !long) ? (
+        <p>Impacto: {projeto.impacto}</p>
+      ) : null}
+      {descPreview ? <p>{descPreview}</p> : null}
+      {expanded && projeto.links?.length ? (
+        <p>{projeto.links.slice(0, 2).join(" · ")}</p>
+      ) : null}
+      <div className="kanban-card__actions">
+        {long ? (
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand(projeto.id);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {expanded ? "Recolher" : "Expandir"}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(projeto);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          Editar
+        </button>
+      </div>
     </article>
   );
 }
@@ -85,11 +131,15 @@ function KanbanColumn({
   label,
   items,
   onEdit,
+  expandedIds,
+  onToggleExpand,
 }: {
   status: ProjetoStatus;
   label: string;
   items: Projeto[];
   onEdit: (p: Projeto) => void;
+  expandedIds: Set<string>;
+  onToggleExpand: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
@@ -101,7 +151,13 @@ function KanbanColumn({
         {label} ({items.length})
       </p>
       {items.map((p) => (
-        <KanbanCard key={p.id} projeto={p} onEdit={onEdit} />
+        <KanbanCard
+          key={p.id}
+          projeto={p}
+          onEdit={onEdit}
+          expanded={expandedIds.has(p.id)}
+          onToggleExpand={onToggleExpand}
+        />
       ))}
     </div>
   );
@@ -116,6 +172,7 @@ const emptyForm = {
   update: "",
   pessoaId: "",
   pessoaNome: "",
+  ajudaDescricao: "",
   data: "",
 };
 
@@ -125,10 +182,20 @@ export default function ProjetosPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Projeto | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
+
+  function toggleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   function openNew() {
     setEditing(null);
@@ -147,6 +214,7 @@ export default function ProjetosPage() {
       update: "",
       pessoaId: p.pessoaId ?? "",
       pessoaNome: p.pessoaNome ?? "",
+      ajudaDescricao: p.ajudaDescricao ?? "",
       data: p.data ?? "",
     });
     setOpen(true);
@@ -200,6 +268,8 @@ export default function ProjetosPage() {
       });
     }
 
+    const hasPessoa = Boolean(linked.pessoaId || linked.pessoaNome);
+
     await upsert({
       ...base,
       titulo: form.titulo.trim(),
@@ -210,12 +280,18 @@ export default function ProjetosPage() {
       updates,
       pessoaId: linked.pessoaId,
       pessoaNome: linked.pessoaNome,
+      ajudaDescricao:
+        hasPessoa && form.ajudaDescricao.trim()
+          ? form.ajudaDescricao.trim()
+          : undefined,
       data: form.data || undefined,
       updatedAt: now,
       createdAt: base.createdAt || now,
     });
     setOpen(false);
   }
+
+  const showAjudaField = Boolean(form.pessoaId || form.pessoaNome.trim());
 
   return (
     <div>
@@ -241,6 +317,8 @@ export default function ProjetosPage() {
                 label={col.label}
                 items={items.filter((p) => p.status === col.id)}
                 onEdit={openEdit}
+                expandedIds={expandedIds}
+                onToggleExpand={toggleExpand}
               />
             ))}
           </div>
@@ -324,6 +402,20 @@ export default function ProjetosPage() {
                       setForm({ ...form, pessoaNome: e.target.value })
                     }
                     placeholder="Ex.: Ana — sincroniza com Pessoas"
+                  />
+                </div>
+              ) : null}
+              {showAjudaField ? (
+                <div className="field">
+                  <label htmlFor="p-ajuda">No que me ajudou (opcional)</label>
+                  <textarea
+                    id="p-ajuda"
+                    value={form.ajudaDescricao}
+                    onChange={(e) =>
+                      setForm({ ...form, ajudaDescricao: e.target.value })
+                    }
+                    placeholder="Ex.: revisou o escopo e alinhou com o time"
+                    style={{ minHeight: 72 }}
                   />
                 </div>
               ) : null}
