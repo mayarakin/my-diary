@@ -1098,20 +1098,20 @@ select {
 }
 
 .keep-grid {
-  column-width: 230px;
-  column-gap: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem;
+  align-items: start;
 }
 
 .keep-card {
-  break-inside: avoid;
-  display: inline-block;
-  width: 100%;
-  margin: 0 0 0.85rem;
-  vertical-align: top;
+  display: flex;
+  flex-direction: column;
   border-radius: 14px;
   border: 1px solid var(--line);
   overflow: hidden;
   animation: rise 0.35s ease both;
+  height: fit-content;
 }
 
 .keep-card--full {
