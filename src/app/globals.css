@@ -564,7 +564,7 @@ select {
 }
 
 .kanban-card__body.is-collapsed {
-  max-height: 4.6rem;
+  max-height: 8.5rem;
   overflow: hidden;
 }
 
@@ -578,6 +578,11 @@ select {
   margin: 0.28rem 0 0;
   font-size: 0.8rem;
   color: var(--ink-soft);
+}
+
+.kanban-card__label {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .kanban-card__actions {

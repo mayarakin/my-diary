@@ -94,14 +94,30 @@ function KanbanCard({
             {new Date(`${projeto.data}T12:00:00`).toLocaleDateString("pt-BR")}
           </p>
         ) : null}
-        {projeto.pessoaNome ? <p>Com: {projeto.pessoaNome}</p> : null}
+        {projeto.pessoaNome ? (
+          <p>
+            <span className="kanban-card__label">Com</span> {projeto.pessoaNome}
+          </p>
+        ) : null}
+        {projeto.descricao ? (
+          <p>
+            <span className="kanban-card__label">Descrição</span> {descPreview}
+          </p>
+        ) : null}
+        {projeto.impacto ? (
+          <p>
+            <span className="kanban-card__label">Impacto</span>{" "}
+            {expanded || projeto.impacto.length <= PREVIEW_LEN
+              ? projeto.impacto
+              : `${projeto.impacto.slice(0, PREVIEW_LEN)}…`}
+          </p>
+        ) : null}
         {expanded && projeto.ajudaDescricao ? (
-          <p>Contribuição: {projeto.ajudaDescricao}</p>
+          <p>
+            <span className="kanban-card__label">Contribuição</span>{" "}
+            {projeto.ajudaDescricao}
+          </p>
         ) : null}
-        {projeto.impacto && (expanded || !long) ? (
-          <p>Impacto: {projeto.impacto}</p>
-        ) : null}
-        {descPreview ? <p>{descPreview}</p> : null}
         {expanded && projeto.links?.length ? (
           <p>{projeto.links.slice(0, 2).join(" · ")}</p>
         ) : null}
