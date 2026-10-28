@@ -170,7 +170,7 @@ export default function NotasPage() {
     <div>
       <PageHeader
         title="Bloco de notas"
-        subtitle="Nota rápida, nota com texto, ou checklist de tarefas a fazer."
+        subtitle="Post-it rápido ou nota completa com texto e checklist."
         actions={
           <button type="button" className="btn" onClick={openNew}>
             Nota completa
@@ -178,55 +178,57 @@ export default function NotasPage() {
         }
       />
 
-      <div
-        className={`keep-composer${quickOpen ? " is-open" : ""}`}
-        onClick={() => {
-          if (!quickOpen) setQuickOpen(true);
-        }}
-      >
-        {!quickOpen ? (
-          <p className="keep-composer__placeholder">Anotar…</p>
-        ) : (
-          <div className="keep-composer__fields" onClick={(e) => e.stopPropagation()}>
-            <input
-              className="keep-composer__title"
-              placeholder="Título"
-              value={quickTitulo}
-              onChange={(e) => setQuickTitulo(e.target.value)}
-              autoFocus
-            />
-            <textarea
-              className="keep-composer__body"
-              placeholder="Escreva uma nota rápida…"
-              value={quickCorpo}
-              onChange={(e) => setQuickCorpo(e.target.value)}
-              onKeyDown={onQuickKey}
-              rows={3}
-            />
-            <div className="keep-composer__actions">
-              <span className="keep-composer__hint">Ctrl/⌘ + Enter para salvar</span>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => {
-                  setQuickOpen(false);
-                  setQuickTitulo("");
-                  setQuickCorpo("");
-                }}
-              >
-                Fechar
-              </button>
-              <button
-                type="button"
-                className="btn btn--sm"
-                onClick={() => void saveQuick()}
-                disabled={!quickTitulo.trim() && !quickCorpo.trim()}
-              >
-                Salvar
-              </button>
+      <div className="postit-composer-wrap">
+        <div
+          className={`postit-composer${quickOpen ? " is-open" : ""}`}
+          onClick={() => {
+            if (!quickOpen) setQuickOpen(true);
+          }}
+        >
+          {!quickOpen ? (
+            <p className="postit-composer__placeholder">Nota rápida…</p>
+          ) : (
+            <div className="postit-composer__fields" onClick={(e) => e.stopPropagation()}>
+              <input
+                className="postit-composer__title"
+                placeholder="Título"
+                value={quickTitulo}
+                onChange={(e) => setQuickTitulo(e.target.value)}
+                autoFocus
+              />
+              <textarea
+                className="postit-composer__body"
+                placeholder="Escreva no post-it…"
+                value={quickCorpo}
+                onChange={(e) => setQuickCorpo(e.target.value)}
+                onKeyDown={onQuickKey}
+                rows={4}
+              />
+              <div className="postit-composer__actions">
+                <span className="postit-composer__hint">Ctrl/⌘ + Enter</span>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => {
+                    setQuickOpen(false);
+                    setQuickTitulo("");
+                    setQuickCorpo("");
+                  }}
+                >
+                  Fechar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--sm"
+                  onClick={() => void saveQuick()}
+                  disabled={!quickTitulo.trim() && !quickCorpo.trim()}
+                >
+                  Fixar
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="field" style={{ marginBottom: "1rem", maxWidth: 420 }}>
@@ -251,10 +253,16 @@ export default function NotasPage() {
           {filtered.map((n) => {
             const tarefas = n.tarefas ?? [];
             const feitas = tarefas.filter((t) => t.feita).length;
+            const isPostit =
+              n.tags.some((t) => t.toLowerCase() === "rápida") &&
+              tarefas.length === 0;
+            const visibleTags = n.tags.filter(
+              (t) => !(isPostit && t.toLowerCase() === "rápida"),
+            );
             return (
               <article
                 key={n.id}
-                className="keep-card"
+                className={`keep-card${isPostit ? " keep-card--postit" : " keep-card--full"}`}
                 style={{ background: colorForId(n.id) }}
               >
                 <button
@@ -269,9 +277,9 @@ export default function NotasPage() {
                       {feitas}/{tarefas.length} feitas
                     </p>
                   ) : null}
-                  {n.tags.length ? (
+                  {visibleTags.length ? (
                     <div className="tag-row">
-                      {n.tags.map((t) => (
+                      {visibleTags.map((t) => (
                         <span key={t} className="tag">
                           {t}
                         </span>

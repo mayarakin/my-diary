@@ -11,12 +11,11 @@ const empty = { nome: "", contexto: "", notas: "" };
 
 export default function PessoasPage() {
   const { items, upsert, remove, loading } = useCollection("pessoas");
-  const oneones = useCollection("oneones");
   const projetos = useCollection("projetos");
-  const atividades = useCollection("atividades");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Pessoa | null>(null);
   const [form, setForm] = useState(empty);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function openNew() {
     setEditing(null);
@@ -54,7 +53,7 @@ export default function PessoasPage() {
     <div>
       <PageHeader
         title="Pessoas"
-        subtitle="Cadastro com 1:1s, projetos em que ajudaram e atividades ligadas."
+        subtitle="Toque no nome para ver projetos e no que cada pessoa ajudou."
         actions={
           <button type="button" className="btn" onClick={openNew}>
             Nova pessoa
@@ -72,96 +71,97 @@ export default function PessoasPage() {
       ) : (
         <div className="list-stack">
           {sorted.map((p) => {
-            const linked1on1 = oneones.items
-              .filter(
-                (o) =>
-                  o.pessoaId === p.id ||
-                  (o.pessoaNome &&
-                    o.pessoaNome.toLowerCase() === p.nome.toLowerCase()),
-              )
-              .sort((a, b) => b.data.localeCompare(a.data));
-
+            const isOpen = expandedId === p.id;
             const linkedProjetos = projetos.items.filter(
               (proj) =>
                 proj.pessoaId === p.id ||
                 (proj.pessoaNome &&
                   proj.pessoaNome.toLowerCase() === p.nome.toLowerCase()),
             );
-
-            const projetoIds = new Set(linkedProjetos.map((proj) => proj.id));
-            const linkedAtividades = atividades.items
-              .filter((a) => a.projetoId && projetoIds.has(a.projetoId))
-              .sort((a, b) => b.date.localeCompare(a.date));
+            const comAjuda = linkedProjetos.filter((proj) => proj.ajudaDescricao?.trim());
 
             return (
-              <div key={p.id} className="list-item">
-                <div>
-                  <h3>{p.nome}</h3>
-                  {p.contexto ? <p>{p.contexto}</p> : null}
-                  {p.notas ? <p>{p.notas}</p> : null}
-
-                  <div className="pessoa-block">
-                    <strong>Projetos em que ajudou</strong>
-                    <p style={{ margin: 0 }}>
-                      {linkedProjetos.length === 0
-                        ? "nenhum ainda"
-                        : linkedProjetos.map((proj) => proj.titulo).join(" · ")}
-                    </p>
-                  </div>
-
-                  <div className="pessoa-block">
-                    <strong>Trajetória nesses projetos</strong>
-                    <p style={{ margin: 0 }}>
-                      {linkedAtividades.length === 0
-                        ? "nenhuma ainda"
-                        : linkedAtividades
-                            .slice(0, 5)
-                            .map(
-                              (a) =>
-                                `${new Date(`${a.date}T12:00:00`).toLocaleDateString("pt-BR")}: ${a.titulo}`,
-                            )
-                            .join(" · ")}
-                      {linkedAtividades.length > 5
-                        ? ` (+${linkedAtividades.length - 5})`
-                        : ""}
-                    </p>
-                  </div>
-
-                  <div className="pessoa-block">
-                    <strong>1:1s</strong>
-                    <p style={{ margin: 0 }}>
-                      {linked1on1.length === 0
-                        ? "nenhum ainda"
-                        : linked1on1
-                            .slice(0, 4)
-                            .map((o) =>
-                              new Date(`${o.data}T12:00:00`).toLocaleDateString(
-                                "pt-BR",
-                              ),
-                            )
-                            .join(" · ")}
-                      {linked1on1.length > 4
-                        ? ` (+${linked1on1.length - 4})`
-                        : ""}
-                    </p>
-                  </div>
-                </div>
-                <div className="item-actions">
+              <div key={p.id} className={`list-item list-item--pessoa${isOpen ? " is-open" : ""}`}>
+                <div className="pessoa-row">
                   <button
                     type="button"
-                    className="btn btn--ghost btn--sm"
-                    onClick={() => openEdit(p)}
+                    className="pessoa-row__toggle"
+                    onClick={() => setExpandedId(isOpen ? null : p.id)}
+                    aria-expanded={isOpen}
                   >
-                    Editar
+                    <span className="pessoa-row__chevron" aria-hidden>
+                      {isOpen ? "▾" : "▸"}
+                    </span>
+                    <span className="pessoa-row__main">
+                      <span className="pessoa-row__name">{p.nome}</span>
+                      {p.contexto ? (
+                        <span className="pessoa-row__contexto">{p.contexto}</span>
+                      ) : null}
+                      {!isOpen && linkedProjetos.length > 0 ? (
+                        <span className="pessoa-row__hint">
+                          {linkedProjetos.length} projeto
+                          {linkedProjetos.length === 1 ? "" : "s"}
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn--danger btn--sm"
-                    onClick={() => void remove(p.id)}
-                  >
-                    Excluir
-                  </button>
+                  <div className="item-actions">
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--sm"
+                      onClick={() => openEdit(p)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--danger btn--sm"
+                      onClick={() => void remove(p.id)}
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </div>
+
+                {isOpen ? (
+                  <div className="pessoa-details">
+                    {p.notas ? <p className="pessoa-details__notas">{p.notas}</p> : null}
+
+                    <div className="pessoa-block">
+                      <strong>Projetos</strong>
+                      {linkedProjetos.length === 0 ? (
+                        <p style={{ margin: 0 }}>nenhum ainda</p>
+                      ) : (
+                        <ul className="pessoa-proj-list">
+                          {linkedProjetos.map((proj) => (
+                            <li key={proj.id}>{proj.titulo}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="pessoa-block">
+                      <strong>No que me ajudou</strong>
+                      {comAjuda.length === 0 ? (
+                        <p style={{ margin: 0 }}>
+                          nada registrado ainda — preencha no projeto o campo
+                          “No que me ajudou”.
+                        </p>
+                      ) : (
+                        <ul className="pessoa-ajuda-list">
+                          {comAjuda.map((proj) => (
+                            <li key={proj.id}>
+                              <span className="pessoa-ajuda-list__proj">{proj.titulo}</span>
+                              <span className="pessoa-ajuda-list__text">
+                                {proj.ajudaDescricao}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             );
           })}

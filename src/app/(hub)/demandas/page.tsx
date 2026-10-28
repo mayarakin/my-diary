@@ -123,7 +123,7 @@ export default function HojePage() {
     <div>
       <PageHeader
         title="Demandas"
-        subtitle="Abra este link no dia e veja só o que cai nesta data — inclusive recorrências (ex.: a cada 15 dias na sexta)."
+        subtitle="O que cai neste dia, inclusive recorrências."
         actions={
           <button
             type="button"
@@ -138,15 +138,19 @@ export default function HojePage() {
         }
       />
 
-      <section className="today-hero">
-        <p className="today-hero__date">{dateLabel}</p>
-        <p className="today-hero__meta">
-          {pending === 0
-            ? "Nada pendente neste dia"
-            : `${pending} demanda(s) pendente(s)`}
-        </p>
-        <div className="field" style={{ marginTop: "0.9rem", maxWidth: 260 }}>
-          <label htmlFor="hoje-data">Ver outro dia</label>
+      <section className="today-bar">
+        <div className="today-bar__left">
+          <p className="today-bar__date">{dateLabel}</p>
+          <p className="today-bar__meta">
+            {pending === 0
+              ? "Nada pendente"
+              : `${pending} pendente${pending === 1 ? "" : "s"}`}
+          </p>
+        </div>
+        <div className="today-bar__date-field">
+          <label htmlFor="hoje-data" className="sr-only">
+            Ver outro dia
+          </label>
           <input
             id="hoje-data"
             type="date"
@@ -154,11 +158,6 @@ export default function HojePage() {
             onChange={(e) => setDateKey(e.target.value)}
           />
         </div>
-        <p className="today-hero__meta" style={{ marginTop: "0.65rem" }}>
-          Atalho fixo:{" "}
-          <code style={{ fontSize: "0.9em" }}>/demandas/</code> — ao abrir,
-          mostra o dia atual.
-        </p>
       </section>
 
       {loading ? (

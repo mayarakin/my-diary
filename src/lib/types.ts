@@ -71,6 +71,8 @@ export interface Projeto {
   /** Pessoa que ajudou neste projeto (cadastro em Pessoas) */
   pessoaId?: string;
   pessoaNome?: string;
+  /** O que a pessoa ajudou / fez neste projeto (opcional) */
+  ajudaDescricao?: string;
   /** Data opcional do projeto (YYYY-MM-DD) */
   data?: string;
   createdAt: string;
