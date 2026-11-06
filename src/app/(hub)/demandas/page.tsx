@@ -36,10 +36,36 @@ const emptyForm = (): FormState => ({
   dataInicio: toDateKey(new Date()),
 });
 
+function formFromDemanda(d: Demanda): FormState {
+  if (d.recorrencia) {
+    return {
+      titulo: d.titulo,
+      prioridade: d.prioridade ?? "",
+      modo: "recorrente",
+      prazo: toDateKey(new Date()),
+      tipo: d.recorrencia.tipo,
+      diaSemana: d.recorrencia.diaSemana ?? 5,
+      intervaloDias: d.recorrencia.intervaloDias ?? 15,
+      dataInicio: d.recorrencia.dataInicio,
+    };
+  }
+  return {
+    titulo: d.titulo,
+    prioridade: d.prioridade ?? "",
+    modo: "prazo",
+    prazo: d.prazo ?? toDateKey(new Date()),
+    tipo: "a_cada_n_dias",
+    diaSemana: 5,
+    intervaloDias: 15,
+    dataInicio: toDateKey(new Date()),
+  };
+}
+
 export default function HojePage() {
   const { items, upsert, remove, loading } = useCollection("demandas");
   const [dateKey, setDateKey] = useState(() => toDateKey(new Date()));
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Demanda | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [recorrenciasAbertas, setRecorrenciasAbertas] = useState(false);
 
@@ -64,6 +90,24 @@ export default function HojePage() {
     });
   }, [dateKey]);
 
+  function openNew() {
+    setEditing(null);
+    setForm(emptyForm());
+    setOpen(true);
+  }
+
+  function openEdit(d: Demanda) {
+    setEditing(d);
+    setForm(formFromDemanda(d));
+    setOpen(true);
+  }
+
+  function closeModal() {
+    setOpen(false);
+    setEditing(null);
+    setForm(emptyForm());
+  }
+
   async function toggle(d: Demanda) {
     if (d.recorrencia) {
       const set = new Set(d.feitasEm ?? []);
@@ -87,23 +131,25 @@ export default function HojePage() {
     e.preventDefault();
     const now = nowIso();
     const base: Demanda = {
-      id: newId(),
+      id: editing?.id ?? newId(),
       titulo: form.titulo.trim(),
-      feita: false,
+      feita: editing?.feita ?? false,
       prioridade: form.prioridade || undefined,
-      createdAt: now,
+      createdAt: editing?.createdAt ?? now,
       updatedAt: now,
-      feitasEm: [],
+      feitasEm: editing?.feitasEm ?? [],
     };
 
     if (form.modo === "prazo") {
       await upsert({
         ...base,
         prazo: form.prazo,
+        recorrencia: undefined,
       });
     } else {
       await upsert({
         ...base,
+        prazo: undefined,
         recorrencia: {
           tipo: form.tipo,
           diaSemana: form.diaSemana,
@@ -113,8 +159,7 @@ export default function HojePage() {
         },
       });
     }
-    setOpen(false);
-    setForm(emptyForm());
+    closeModal();
   }
 
   const pending = dueToday.filter((d) => !isDemandaDoneOn(d, dateKey)).length;
@@ -125,14 +170,7 @@ export default function HojePage() {
         title="Demandas"
         subtitle="O que cai neste dia, inclusive recorrências."
         actions={
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              setForm(emptyForm());
-              setOpen(true);
-            }}
-          >
+          <button type="button" className="btn" onClick={openNew}>
             Nova demanda
           </button>
         }
@@ -196,6 +234,13 @@ export default function HojePage() {
                 <button
                   type="button"
                   className="btn btn--ghost btn--sm"
+                  onClick={() => openEdit(d)}
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
                   onClick={() => void remove(d.id)}
                 >
                   Excluir
@@ -248,13 +293,22 @@ export default function HojePage() {
                           ).toLocaleDateString("pt-BR")}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        className="btn btn--danger btn--sm"
-                        onClick={() => void remove(d.id)}
-                      >
-                        Excluir
-                      </button>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => openEdit(d)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--danger btn--sm"
+                          onClick={() => void remove(d.id)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
                     </div>
                   ))}
               </div>
@@ -264,9 +318,9 @@ export default function HojePage() {
       </section>
 
       {open ? (
-        <div className="modal-backdrop" onClick={() => setOpen(false)}>
+        <div className="modal-backdrop" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Nova demanda do dia</h2>
+            <h2>{editing ? "Editar demanda" : "Nova demanda do dia"}</h2>
             <form className="form-grid" onSubmit={onSubmit}>
               <div className="field">
                 <label htmlFor="h-titulo">Título</label>
@@ -392,15 +446,16 @@ export default function HojePage() {
                     />
                   </div>
                   <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ink-soft)" }}>
-                    Exemplo: a cada 15 dias na sexta → escolha “A cada N dias”,
-                    intervalo 15, dia Sexta, e a data da próxima sexta como
-                    início.
+                    Com dia da semana, o intervalo é alinhado em semanas para
+                    continuar no mesmo dia (ex.: 15 dias na sexta → a cada 2
+                    sextas). Sem isso, 15 dias a partir de uma sexta cairia em
+                    sábado.
                   </p>
                 </>
               )}
 
               <div className="modal__actions">
-                <button type="button" className="btn btn--ghost" onClick={() => setOpen(false)}>
+                <button type="button" className="btn btn--ghost" onClick={closeModal}>
                   Cancelar
                 </button>
                 <button type="submit" className="btn">
