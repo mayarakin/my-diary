@@ -32,6 +32,15 @@ export function weekdayLabel(day: number): string {
   return labels[day] ?? "—";
 }
 
+/**
+ * Converte "a cada N dias" + dia da semana em passos de semanas.
+ * Ex.: 15 dias na sexta → 2 semanas (quinzenal), não 15 dias corridos
+ * (que quase nunca caem de novo na sexta).
+ */
+export function weeksFromIntervalDays(intervaloDias: number): number {
+  return Math.max(1, Math.round(Math.max(1, intervaloDias) / 7));
+}
+
 /** True se a demanda deve aparecer na data (YYYY-MM-DD). */
 export function isDemandaDueOn(demanda: Demanda, dateKey: string): boolean {
   const rec = demanda.recorrencia;
@@ -61,10 +70,17 @@ export function isDemandaDueOn(demanda: Demanda, dateKey: string): boolean {
 
   if (rec.tipo === "a_cada_n_dias") {
     const n = Math.max(1, rec.intervaloDias ?? 15);
-    if (rec.diaSemana !== undefined && weekday !== rec.diaSemana) {
-      return false;
-    }
     const diff = daysBetween(start, dateKey);
+
+    // Com dia da semana: "a cada 15 dias na sexta" = a cada ~N dias
+    // naquele weekday (ex.: 15 → 2 semanas). Contar só dias corridos
+    // (diff % 15) quase nunca cai no mesmo weekday de novo.
+    if (rec.diaSemana !== undefined) {
+      if (weekday !== rec.diaSemana) return false;
+      const stepDays = weeksFromIntervalDays(n) * 7;
+      return diff % stepDays === 0;
+    }
+
     return diff % n === 0;
   }
 
@@ -88,9 +104,12 @@ export function describeRecorrencia(rec?: Recorrencia): string {
     return `A cada 2 semanas (${weekdayLabel(rec.diaSemana ?? 0)})`;
   }
   const n = rec.intervaloDias ?? 15;
-  const day =
-    rec.diaSemana !== undefined
-      ? ` · ${weekdayLabel(rec.diaSemana)}`
-      : "";
-  return `A cada ${n} dias${day}`;
+  if (rec.diaSemana !== undefined) {
+    const weeks = weeksFromIntervalDays(n);
+    const day = weekdayLabel(rec.diaSemana);
+    if (weeks === 1) return `Toda ${day.toLowerCase()}`;
+    if (weeks === 2) return `A cada 2 semanas (${day})`;
+    return `A cada ${weeks} semanas (${day})`;
+  }
+  return `A cada ${n} dias`;
 }

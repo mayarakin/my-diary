@@ -28,14 +28,18 @@ export type ProjetoStatus =
 
 export type DemandaPrioridade = "baixa" | "media" | "alta";
 
-/** Recorrência para demandas do dia (ex.: a cada 15 dias na sexta). */
+/** Recorrência para demandas do dia (ex.: a cada 2 semanas na sexta). */
 export type RecorrenciaTipo = "semanal" | "quinzenal" | "a_cada_n_dias";
 
 export interface Recorrencia {
   tipo: RecorrenciaTipo;
   /** 0=Dom … 5=Sex … 6=Sáb */
   diaSemana?: number;
-  /** Usado em a_cada_n_dias (ex.: 15) */
+  /**
+   * Usado em a_cada_n_dias (ex.: 15).
+   * Com diaSemana, o intervalo vira semanas (~N/7), para “15 dias na sexta”
+   * cair a cada 2 sextas — não em dias corridos que quase nunca são sexta.
+   */
   intervaloDias?: number;
   /** Primeira ocorrência (YYYY-MM-DD) */
   dataInicio: string;
